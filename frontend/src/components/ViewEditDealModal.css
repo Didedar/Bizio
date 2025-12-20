@@ -1,0 +1,550 @@
+/* ============================================
+   Modal Layout & Overlay
+   ============================================ */
+.view-edit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.view-edit-modal-content {
+  background-color: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  /* Немного уменьшил для аккуратности */
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  /* Важно для скруглений */
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.modal-header-simple {
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  /* Чтобы хедер не сжимался */
+}
+
+.header-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-text-cancel {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.btn-text-cancel:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+/* ============================================
+   Body & Scroll
+   ============================================ */
+.modal-scroll-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ============================================
+   NEW: Financial / Margin Section
+   (Этого не хватало в вашем CSS)
+   ============================================ */
+.margin-display {
+  display: flex;
+  gap: 16px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.margin-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.margin-item.highlight {
+  background-color: #eff6ff;
+  /* Light blue background */
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #dbeafe;
+  margin: -8px 0;
+  /* Компенсация padding родителя для акцента */
+  justify-content: center;
+}
+
+.margin-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.margin-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.margin-value.price {
+  color: #111827;
+}
+
+.margin-value.cost {
+  color: #6b7280;
+}
+
+/* Colors for Margin */
+.margin-value.margin.positive {
+  color: #059669;
+}
+
+/* Green */
+.margin-value.margin.negative {
+  color: #dc2626;
+}
+
+/* Red */
+
+.margin-value-group {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.margin-percent {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* ============================================
+   Forms & Inputs
+   ============================================ */
+.form-section-group {
+  margin-bottom: 32px;
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.section-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-field-row {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-field-row label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.simple-input,
+.simple-select,
+.simple-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #111827;
+  transition: border-color 0.15s;
+  background-color: #fff;
+}
+
+.simple-input:focus,
+.simple-select:focus,
+.simple-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.simple-select.width-auto {
+  width: auto;
+  min-width: 100px;
+}
+
+.simple-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #111827;
+  background-color: #ffffff;
+  outline: none;
+  transition: all 0.2s;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.simple-textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.simple-select-transparent {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #111827;
+  background-color: #ffffff;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.simple-select-transparent:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.input-group-row {
+  display: flex;
+  gap: 8px;
+}
+
+.simple-input.pl-8 {
+  padding-left: 36px;
+  /* Место под иконку */
+}
+
+.input-with-icon {
+  position: relative;
+  flex: 1;
+}
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.search-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  cursor: pointer;
+}
+
+.icon-btn-input {
+  background: none;
+  border: 1px solid transparent;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  color: #9ca3af;
+  transition: all 0.2s;
+}
+
+.icon-btn-input:hover {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+/* ============================================
+   NEW: Products Table
+   (Этого не хватало в вашем CSS)
+   ============================================ */
+.products-table {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.products-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.products-table th {
+  background-color: #f9fafb;
+  text-align: left;
+  padding: 10px 16px;
+  color: #6b7280;
+  font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.products-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #111827;
+}
+
+.products-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.products-table tr:last-child td {
+  border-bottom: none;
+}
+
+.item-total {
+  font-weight: 600;
+}
+
+.empty-products {
+  padding: 32px 24px;
+  text-align: center;
+  background-color: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.btn-add-product {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  border: none;
+  width: 100%;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn-add-product:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-add-product:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ============================================
+   Buttons & Links
+   ============================================ */
+.btn-link-add {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.2s;
+}
+
+.btn-link-add:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.icon-btn-small {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.icon-btn-small:hover {
+  background-color: #f3f4f6;
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+.modal-footer-actions {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  display: flex;
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.btn-link-text {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-link-danger {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.save-actions-row {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  /* Separator if needed */
+  background-color: #fff;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-save-primary {
+  background-color: #111827;
+  /* Black/Dark Gray */
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-save-primary:hover:not(:disabled) {
+  background-color: #374151;
+}
+
+.btn-save-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   Utilities
+   ============================================ */
+.error-banner {
+  margin: 0 24px 16px;
+  padding: 12px;
+  background-color: #fee2e2;
+  color: #dc2626;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.checkbox-row {
+  flex-direction: row;
+  align-items: center;
+}
+
+.checkbox-row input {
+  margin: 0;
+}
+
+.ml-auto {
+  margin-left: auto;
+}
+
+/* Remove button for deal items */
+.btn-remove-item {
+  background: none;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-remove-item:hover:not(:disabled) {
+  background-color: #fee2e2;
+}
+
+.btn-remove-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

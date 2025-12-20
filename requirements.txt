@@ -1,0 +1,2 @@
+# Root requirements for Vercel deployment
+-r backend/requirements.txt

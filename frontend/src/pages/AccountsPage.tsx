@@ -1,0 +1,902 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { clientsApi, dealsApi } from '../api/client';
+import type { Client, ClientCreate, Deal } from '../types';
+import SortDropdown, { SortOption } from '../components/SortDropdown';
+import ColumnsDropdown, { ColumnConfig } from '../components/ColumnsDropdown';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import { useAuth } from '../contexts/AuthContext';
+import './AccountsPage.css';
+
+interface CreateAccountModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  account?: Client | null;
+  tenantId: number | null;
+}
+
+
+
+const CreateAccountModal: React.FC<CreateAccountModalProps> = ({ isOpen, onClose, onSuccess, account, tenantId }) => {
+  const [formData, setFormData] = useState<ClientCreate>({
+    name: '',
+    company: '',
+    email: '',
+    phone: '',
+    address: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (account) {
+      setFormData({
+        name: account.name || '',
+        company: account.company || '',
+        email: account.email || '',
+        phone: account.phone || '',
+        address: account.address || '',
+      });
+    } else {
+      setFormData({
+        name: '',
+        company: '',
+        email: '',
+        phone: '',
+        address: '',
+      });
+    }
+  }, [account, isOpen]);
+
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (account) {
+        // Edit mode - only update client
+        await clientsApi.update(account.id, formData);
+      } else {
+        // Create mode - create client only
+        if (!tenantId) throw new Error('Tenant ID is required');
+        await clientsApi.create(tenantId, formData);
+      }
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to save account');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content modal-content-large" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{account ? 'Edit Account' : 'New Account'}</h2>
+          <button className="modal-close" onClick={onClose}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          {error && (
+            <div className="error-message">{error}</div>
+          )}
+
+          <div className="form-section">
+            <h3 className="form-section-title">Client Information</h3>
+            <div className="form-group">
+              <label>Contact Name *</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Company Name</label>
+              <input
+                type="text"
+                value={formData.company || ''}
+                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={formData.email || ''}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Phone</label>
+              <input
+                type="tel"
+                value={formData.phone || ''}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Address</label>
+              <textarea
+                value={formData.address || ''}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? 'Saving...' : account ? 'Update' : 'Create'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+interface AccountWithDeals extends Client {
+  deals?: Deal[];
+}
+
+interface AccountFilterOptions {
+  dateFrom: string;
+  dateTo: string;
+  hasEmail: boolean | null;
+  hasPhone: boolean | null;
+  hasDeals: boolean | null;
+}
+
+const AccountsPage: React.FC = () => {
+  const { tenantId } = useAuth();
+  const [accounts, setAccounts] = useState<AccountWithDeals[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<Client | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [expandedAccounts, setExpandedAccounts] = useState<Set<number>>(new Set());
+  const [loadingDeals, setLoadingDeals] = useState<Set<number>>(new Set());
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [deleteAccountId, setDeleteAccountId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [filters, setFilters] = useState<AccountFilterOptions>({
+    dateFrom: '',
+    dateTo: '',
+    hasEmail: null,
+    hasPhone: null,
+    hasDeals: null,
+  });
+  const [sortOption, setSortOption] = useState<SortOption>({
+    field: 'created_at',
+    direction: 'desc',
+  });
+  const [columns, setColumns] = useState<ColumnConfig[]>([
+    { id: 'name', label: 'Contact Name', visible: true },
+    { id: 'company', label: 'Company Name', visible: true },
+    { id: 'email', label: 'Email', visible: true },
+    { id: 'phone', label: 'Phone', visible: true },
+    { id: 'address', label: 'Address', visible: true },
+    { id: 'deals', label: 'Deals', visible: true },
+    { id: 'created', label: 'Created', visible: true },
+  ]);
+
+  useEffect(() => {
+    if (tenantId) {
+      loadAccounts();
+    }
+  }, [tenantId]);
+
+  const loadAccounts = async () => {
+    if (!tenantId) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await clientsApi.list(tenantId);
+      setAccounts(data.map(acc => ({ ...acc, deals: undefined })));
+    } catch (error) {
+      console.error('Failed to load accounts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadDealsForAccount = async (accountId: number) => {
+    if (loadingDeals.has(accountId) || !tenantId) return;
+
+    try {
+      setLoadingDeals(prev => new Set(prev).add(accountId));
+      const allDeals = await dealsApi.list(tenantId);
+      const accountDeals = allDeals.filter(deal => deal.client_id === accountId);
+
+      setAccounts(prev => prev.map(acc =>
+        acc.id === accountId ? { ...acc, deals: accountDeals } : acc
+      ));
+    } catch (error) {
+      console.error('Failed to load deals:', error);
+    } finally {
+      setLoadingDeals(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(accountId);
+        return newSet;
+      });
+    }
+  };
+
+  const toggleExpand = (accountId: number) => {
+    const newExpanded = new Set(expandedAccounts);
+    if (newExpanded.has(accountId)) {
+      newExpanded.delete(accountId);
+    } else {
+      newExpanded.add(accountId);
+      const account = accounts.find(acc => acc.id === accountId);
+      if (account && !account.deals) {
+        loadDealsForAccount(accountId);
+      }
+    }
+    setExpandedAccounts(newExpanded);
+  };
+
+  const handleAccountCreated = () => {
+    setIsCreateModalOpen(false);
+    setSelectedAccount(null);
+    loadAccounts();
+  };
+
+  const handleEditAccount = (account: Client) => {
+    setSelectedAccount(account);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteAccountId === null) return;
+    try {
+      setDeleting(true);
+      await clientsApi.delete(deleteAccountId);
+      setDeleteAccountId(null);
+      loadAccounts();
+    } catch (error) {
+      console.error('Failed to delete account:', error);
+      setError('Failed to delete account');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const filteredAccounts = useMemo(() => {
+    let result = [...accounts];
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(account =>
+        account.name.toLowerCase().includes(query) ||
+        account.company?.toLowerCase().includes(query) ||
+        account.email?.toLowerCase().includes(query) ||
+        account.phone?.toLowerCase().includes(query)
+      );
+    }
+
+    // Date filter
+    if (filters.dateFrom) {
+      const fromDate = new Date(filters.dateFrom);
+      result = result.filter(account => new Date(account.created_at) >= fromDate);
+    }
+    if (filters.dateTo) {
+      const toDate = new Date(filters.dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      result = result.filter(account => new Date(account.created_at) <= toDate);
+    }
+
+    // Email filter
+    if (filters.hasEmail !== null) {
+      result = result.filter(account =>
+        filters.hasEmail ? !!account.email : !account.email
+      );
+    }
+
+    // Phone filter
+    if (filters.hasPhone !== null) {
+      result = result.filter(account =>
+        filters.hasPhone ? !!account.phone : !account.phone
+      );
+    }
+
+    // Deals filter
+    if (filters.hasDeals !== null) {
+      result = result.filter(account => {
+        const hasDeals = account.deals && account.deals.length > 0;
+        return filters.hasDeals ? hasDeals : !hasDeals;
+      });
+    }
+
+    return result;
+  }, [accounts, searchQuery, filters]);
+
+  // Apply sorting
+  const sortedAccounts = useMemo(() => {
+    const result = [...filteredAccounts];
+
+    result.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortOption.field) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'company':
+          aValue = (a.company || '').toLowerCase();
+          bValue = (b.company || '').toLowerCase();
+          break;
+        case 'email':
+          aValue = (a.email || '').toLowerCase();
+          bValue = (b.email || '').toLowerCase();
+          break;
+        case 'phone':
+          aValue = (a.phone || '').toLowerCase();
+          bValue = (b.phone || '').toLowerCase();
+          break;
+        case 'created_at':
+        default:
+          aValue = new Date(a.created_at).getTime();
+          bValue = new Date(b.created_at).getTime();
+          break;
+      }
+
+      if (aValue < bValue) {
+        return sortOption.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortOption.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+
+    return result;
+  }, [filteredAccounts, sortOption]);
+
+  const hasActiveFilters =
+    filters.dateFrom !== '' ||
+    filters.dateTo !== '' ||
+    filters.hasEmail !== null ||
+    filters.hasPhone !== null ||
+    filters.hasDeals !== null;
+
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (filters.dateFrom) count++;
+    if (filters.dateTo) count++;
+    if (filters.hasEmail !== null) count++;
+    if (filters.hasPhone !== null) count++;
+    if (filters.hasDeals !== null) count++;
+    return count;
+  };
+
+  const handleFilterReset = () => {
+    const emptyFilters: AccountFilterOptions = {
+      dateFrom: '',
+      dateTo: '',
+      hasEmail: null,
+      hasPhone: null,
+      hasDeals: null,
+    };
+    setFilters(emptyFilters);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const formatCurrency = (amount: number, currency: string = 'KZT') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  return (
+    <div className="accounts-page">
+      <div className="accounts-header">
+        <div className="accounts-header-content">
+          <div className="accounts-title-section">
+            <h1 className="accounts-title">Accounts</h1>
+            {sortedAccounts.length > 0 && (
+              <span className="accounts-count">{sortedAccounts.length} {sortedAccounts.length === 1 ? 'account' : 'accounts'}</span>
+            )}
+          </div>
+          <button className="btn-create-account" onClick={() => {
+            setSelectedAccount(null);
+            setIsCreateModalOpen(true);
+          }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 3V13M3 8H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            Create Account
+          </button>
+        </div>
+      </div>
+
+      <div className="accounts-toolbar">
+        <div className="toolbar-left">
+          <div className="search-wrapper">
+            <svg className="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M7.33333 12.6667C10.2789 12.6667 12.6667 10.2789 12.6667 7.33333C12.6667 4.38781 10.2789 2 7.33333 2C4.38781 2 2 4.38781 2 7.33333C2 10.2789 4.38781 12.6667 7.33333 12.6667Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M14 14L11.1 11.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search accounts..."
+              className="search-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                className="search-clear"
+                onClick={() => setSearchQuery('')}
+                title="Clear search"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="toolbar-right">
+          <button
+            className="toolbar-btn"
+            onClick={loadAccounts}
+            title="Refresh"
+            disabled={loading}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              className={loading ? 'spinning' : ''}
+            >
+              <path d="M8 1V3M8 13V15M3 8H1M15 8H13M4.34315 4.34315L5.75736 5.75736M10.2426 10.2426L11.6569 11.6569M1 8C1 11.866 4.13401 15 8 15C11.866 15 15 11.866 15 8C15 4.13401 11.866 1 8 1M1 8C1 4.13401 4.13401 1 8 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            className={`toolbar-btn filter-btn ${hasActiveFilters ? 'active' : ''}`}
+            onClick={() => setIsFilterOpen(true)}
+            title="Filter"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M2 4H14M4 8H12M6 12H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            Filter
+            {hasActiveFilters && (
+              <span className="filter-badge">{getActiveFilterCount()}</span>
+            )}
+          </button>
+          <SortDropdown
+            sortOption={sortOption}
+            onSortChange={setSortOption}
+            sortFields={[
+              { field: 'created_at', label: 'Created Date' },
+              { field: 'name', label: 'Contact Name' },
+              { field: 'company', label: 'Company Name' },
+              { field: 'email', label: 'Email' },
+              { field: 'phone', label: 'Phone' },
+            ]}
+          />
+          <ColumnsDropdown columns={columns} onColumnsChange={setColumns} />
+        </div>
+      </div>
+
+      {error && (
+        <div className="error-banner">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 6V10M8 11H8.00667M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <span>{error}</span>
+          <button className="error-dismiss" onClick={() => setError(null)}>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      <div className="accounts-content">
+        {loading ? (
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Loading accounts...</p>
+          </div>
+        ) : error ? null : sortedAccounts.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-content">
+              <div className="empty-state-icon">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                  <path d="M32 8C18.745 8 8 18.745 8 32C8 45.255 18.745 56 32 56C45.255 56 56 45.255 56 32C56 18.745 45.255 8 32 8ZM36 24C36 26.2091 34.2091 28 32 28C29.7909 28 28 26.2091 28 24C28 21.7909 29.7909 20 32 20C34.2091 20 36 21.7909 36 24ZM28 36H36V44H28V36ZM36 44V36H44V44H36Z" fill="currentColor" fillOpacity="0.1" />
+                  <path d="M32 22C33.1046 22 34 22.8954 34 24C34 25.1046 33.1046 26 32 26C30.8954 26 30 25.1046 30 24C30 22.8954 30.8954 22 32 22ZM28 34H36V42H28V34ZM38 34H46V42H38V34Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </div>
+              <h2>No Accounts Found</h2>
+              <p className="empty-state-description">
+                {hasActiveFilters || searchQuery
+                  ? 'Try adjusting your filters or search query to see more results.'
+                  : 'Get started by creating your first account.'}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="accounts-table-container">
+            <table className="accounts-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '40px' }}></th>
+                  {columns.find(col => col.id === 'name')?.visible && <th>Contact Name</th>}
+                  {columns.find(col => col.id === 'company')?.visible && <th>Company Name</th>}
+                  {columns.find(col => col.id === 'email')?.visible && <th>Email</th>}
+                  {columns.find(col => col.id === 'phone')?.visible && <th>Phone</th>}
+                  {columns.find(col => col.id === 'address')?.visible && <th>Address</th>}
+                  {columns.find(col => col.id === 'deals')?.visible && <th>Deals</th>}
+                  {columns.find(col => col.id === 'created')?.visible && <th>Created</th>}
+                  <th className="actions-column">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedAccounts.map((account) => {
+                  const isExpanded = expandedAccounts.has(account.id);
+                  const isLoadingDeals = loadingDeals.has(account.id);
+                  const deals = account.deals || [];
+
+                  return (
+                    <React.Fragment key={account.id}>
+                      <tr className="account-row" onClick={() => toggleExpand(account.id)}>
+                        <td>
+                          <button
+                            className="expand-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(account.id);
+                            }}
+                            title={isExpanded ? 'Collapse' : 'Expand'}
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                              className={isExpanded ? 'expanded' : ''}
+                            >
+                              <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+                        </td>
+                        {columns.find(col => col.id === 'name')?.visible && (
+                          <td>
+                            <div className="account-name">{account.name}</div>
+                          </td>
+                        )}
+                        {columns.find(col => col.id === 'company')?.visible && (
+                          <td>
+                            <div className="account-company">{account.company || '—'}</div>
+                          </td>
+                        )}
+                        {columns.find(col => col.id === 'email')?.visible && (
+                          <td>
+                            <div className="account-email">{account.email || '—'}</div>
+                          </td>
+                        )}
+                        {columns.find(col => col.id === 'phone')?.visible && (
+                          <td>
+                            <div className="account-phone">{account.phone || '—'}</div>
+                          </td>
+                        )}
+                        {columns.find(col => col.id === 'address')?.visible && (
+                          <td>
+                            <div className="account-address">{account.address || '—'}</div>
+                          </td>
+                        )}
+                        {columns.find(col => col.id === 'deals')?.visible && (
+                          <td>
+                            <div className="account-deals-count">
+                              {(account.deals_count ?? deals.length)} {(account.deals_count ?? deals.length) === 1 ? 'deal' : 'deals'}
+                            </div>
+                          </td>
+                        )}
+                        {columns.find(col => col.id === 'created')?.visible && (
+                          <td>
+                            <div className="account-date">{formatDate(account.created_at)}</div>
+                          </td>
+                        )}
+                        <td className="actions-column" onClick={(e) => e.stopPropagation()}>
+                          <div className="table-actions">
+                            <button
+                              className="action-btn action-btn-view"
+                              onClick={() => handleEditAccount(account)}
+                              title="Edit"
+                            >
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M11.3333 2.00001C11.5084 1.82491 11.7163 1.686 11.9451 1.59128C12.1739 1.49657 12.4189 1.44775 12.6667 1.44775C12.9144 1.44775 13.1594 1.49657 13.3882 1.59128C13.617 1.686 13.8249 1.82491 14 2.00001C14.1751 2.1751 14.314 2.383 14.4087 2.6118C14.5034 2.8406 14.5522 3.08564 14.5522 3.33334C14.5522 3.58104 14.5034 3.82608 14.4087 4.05486C14.314 4.28364 14.1751 4.49154 14 4.66668L5.00001 13.6667L1.33334 14.6667L2.33334 11L11.3333 2.00001Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
+                            <button
+                              className="action-btn action-btn-delete"
+                              onClick={() => setDeleteAccountId(account.id)}
+                              title="Delete"
+                            >
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M2 4H14M6 4V2C6 1.44772 6.44772 1 7 1H9C9.55228 1 10 1.44772 10 2V4M12.6667 4V13.3333C12.6667 13.687 12.5262 14.0261 12.2761 14.2761C12.0261 14.5262 11.687 14.6667 11.3333 14.6667H4.66667C4.31305 14.6667 3.97391 14.5262 3.72386 14.2761C3.47381 14.0261 3.33333 13.687 3.33333 13.3333V4H12.6667Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr className="account-details-row">
+                          <td colSpan={7}>
+                            <div className="account-details">
+                              <div className="account-info-section">
+                                <h3>Client Information</h3>
+                                <div className="info-grid">
+                                  <div className="info-item">
+                                    <span className="info-label">Contact Name:</span>
+                                    <span className="info-value">{account.name}</span>
+                                  </div>
+                                  {account.company && (
+                                    <div className="info-item">
+                                      <span className="info-label">Company:</span>
+                                      <span className="info-value">{account.company}</span>
+                                    </div>
+                                  )}
+                                  {account.email && (
+                                    <div className="info-item">
+                                      <span className="info-label">Email:</span>
+                                      <span className="info-value">{account.email}</span>
+                                    </div>
+                                  )}
+                                  {account.phone && (
+                                    <div className="info-item">
+                                      <span className="info-label">Phone:</span>
+                                      <span className="info-value">{account.phone}</span>
+                                    </div>
+                                  )}
+                                  {account.address && (
+                                    <div className="info-item">
+                                      <span className="info-label">Address:</span>
+                                      <span className="info-value">{account.address}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="deals-section">
+                                <h3>Deals & Products/Services</h3>
+                                {isLoadingDeals ? (
+                                  <div className="loading-deals">Loading deals...</div>
+                                ) : deals.length === 0 ? (
+                                  <div className="no-deals">No deals found for this account.</div>
+                                ) : (
+                                  <div className="deals-list">
+                                    {deals.map((deal) => (
+                                      <div key={deal.id} className="deal-card">
+                                        <div className="deal-header">
+                                          <div className="deal-title">{deal.title}</div>
+                                          <div className="deal-meta">
+                                            <span className="deal-status">{deal.status}</span>
+                                            <span className="deal-total">
+                                              Total: {formatCurrency(deal.total_price, deal.currency)}
+                                            </span>
+                                            <span className="deal-date">{formatDate(deal.created_at)}</span>
+                                          </div>
+                                        </div>
+
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <CreateAccountModal
+        isOpen={isCreateModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setSelectedAccount(null);
+        }}
+        onSuccess={handleAccountCreated}
+        account={selectedAccount}
+        tenantId={tenantId}
+      />
+
+      {isFilterOpen && (
+        <div className="filter-modal-overlay" onClick={() => setIsFilterOpen(false)}>
+          <div className="filter-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="filter-modal-header">
+              <h3>Filter Accounts</h3>
+              <button className="filter-close-btn" onClick={() => setIsFilterOpen(false)}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="filter-modal-body">
+              <div className="filter-section">
+                <label className="filter-label">Date Range</label>
+                <div className="filter-range">
+                  <input
+                    type="date"
+                    value={filters.dateFrom}
+                    onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                    className="filter-input"
+                  />
+                  <span className="filter-range-separator">to</span>
+                  <input
+                    type="date"
+                    value={filters.dateTo}
+                    onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                    className="filter-input"
+                  />
+                </div>
+              </div>
+              <div className="filter-section">
+                <label className="filter-label">Has Email</label>
+                <div className="filter-radio-group">
+                  <label className="filter-radio-label">
+                    <input
+                      type="radio"
+                      name="hasEmail"
+                      checked={filters.hasEmail === null}
+                      onChange={() => setFilters({ ...filters, hasEmail: null })}
+                    />
+                    <span>All</span>
+                  </label>
+                  <label className="filter-radio-label">
+                    <input
+                      type="radio"
+                      name="hasEmail"
+                      checked={filters.hasEmail === true}
+                      onChange={() => setFilters({ ...filters, hasEmail: true })}
+                    />
+                    <span>Yes</span>
+                  </label>
+                  <label className="filter-radio-label">
+                    <input
+                      type="radio"
+                      name="hasEmail"
+                      checked={filters.hasEmail === false}
+                      onChange={() => setFilters({ ...filters, hasEmail: false })}
+                    />
+                    <span>No</span>
+                  </label>
+                </div>
+              </div>
+              <div className="filter-section">
+                <label className="filter-label">Has Phone</label>
+                <div className="filter-radio-group">
+                  <label className="filter-radio-label">
+                    <input
+                      type="radio"
+                      name="hasPhone"
+                      checked={filters.hasPhone === null}
+                      onChange={() => setFilters({ ...filters, hasPhone: null })}
+                    />
+                    <span>All</span>
+                  </label>
+                  <label className="filter-radio-label">
+                    <input
+                      type="radio"
+                      name="hasPhone"
+                      checked={filters.hasPhone === true}
+                      onChange={() => setFilters({ ...filters, hasPhone: true })}
+                    />
+                    <span>Yes</span>
+                  </label>
+                  <label className="filter-radio-label">
+                    <input
+                      type="radio"
+                      name="hasPhone"
+                      checked={filters.hasPhone === false}
+                      onChange={() => setFilters({ ...filters, hasPhone: false })}
+                    />
+                    <span>No</span>
+                  </label>
+                </div>
+              </div>
+              <div className="filter-section">
+                <label className="filter-label">Has Deals</label>
+                <div className="filter-radio-group">
+                  <label className="filter-radio-label">
+                    <input
+                      type="radio"
+                      name="hasDeals"
+                      checked={filters.hasDeals === null}
+                      onChange={() => setFilters({ ...filters, hasDeals: null })}
+                    />
+                    <span>All</span>
+                  </label>
+                  <label className="filter-radio-label">
+                    <input
+                      type="radio"
+                      name="hasDeals"
+                      checked={filters.hasDeals === true}
+                      onChange={() => setFilters({ ...filters, hasDeals: true })}
+                    />
+                    <span>Yes</span>
+                  </label>
+                  <label className="filter-radio-label">
+                    <input
+                      type="radio"
+                      name="hasDeals"
+                      checked={filters.hasDeals === false}
+                      onChange={() => setFilters({ ...filters, hasDeals: false })}
+                    />
+                    <span>No</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className="filter-modal-footer">
+              <button className="filter-btn-reset" onClick={handleFilterReset}>
+                Reset
+              </button>
+              <div className="filter-footer-right">
+                <button className="filter-btn-cancel" onClick={() => setIsFilterOpen(false)}>
+                  Cancel
+                </button>
+                <button className="filter-btn-apply" onClick={() => setIsFilterOpen(false)}>
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <DeleteConfirmModal
+        isOpen={deleteAccountId !== null}
+        onClose={() => setDeleteAccountId(null)}
+        onConfirm={handleDeleteAccount}
+        title="Delete Account"
+        message="Are you sure you want to delete this account? This action cannot be undone."
+        loading={deleting}
+      />
+    </div>
+  );
+};
+
+export default AccountsPage;
+

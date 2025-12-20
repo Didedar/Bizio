@@ -1,0 +1,84 @@
+.app-header {
+  display: flex;
+  /* ИСПРАВЛЕНИЕ: Меняем flex-start на center, чтобы табы были по центру страницы */
+  justify-content: center;
+  align-items: center;
+  padding: 0 24px;
+  height: 64px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  position: fixed;
+  top: 0;
+  left: 260px;
+  right: 0;
+  z-index: 90;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: left;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.app-header.sidebar-collapsed {
+  left: 64px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  /* Занимаем всю высоту */
+  flex: 1;
+  /* Растягиваемся, если нужно */
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  /* Увеличил расстояние между табами для лучшей читаемости */
+  height: 100%;
+  /* Навигация тоже во всю высоту */
+}
+
+.header-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  /* ИСПРАВЛЕНИЕ: Кнопка во всю высоту хедера */
+  padding: 0 4px;
+  /* Убрал лишние отступы по бокам, используем gap у родителя */
+  border: none;
+  background-color: transparent;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  /* Линия снизу теперь будет прижата к краю хедера */
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  /* Небольшой хак, чтобы линия перекрывала border хедера */
+}
+
+.header-tab:hover {
+  color: #111827;
+}
+
+.header-tab.active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+}
+
+/* Остальные стили (на случай если ты вернешь правую часть) */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+  position: absolute;
+  /* Если вернешь профиль, закрепи его справа */
+  right: 24px;
+}
