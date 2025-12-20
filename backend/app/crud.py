@@ -402,11 +402,19 @@ async def get_deal(db: AsyncSession, deal_id: int):
     return q.scalar_one_or_none()
 
 async def update_deal_status(db: AsyncSession, deal_id: int, status: str):
+    from datetime import datetime, timezone
     try:
         status_enum = models.DealStatus(status)
     except ValueError:
         raise ValueError(f"Invalid status: {status}")
-    await db.execute(update(models.Deal).where(models.Deal.id == deal_id).values(status=status_enum))
+    
+    update_values = {'status': status_enum}
+    
+    # Set closed_at when deal is finalized (moved to final_account status)
+    if status_enum == models.DealStatus.final_account:
+        update_values['closed_at'] = datetime.now(timezone.utc)
+    
+    await db.execute(update(models.Deal).where(models.Deal.id == deal_id).values(**update_values))
     await db.commit()
     return await get_deal(db, deal_id)
 
@@ -419,7 +427,12 @@ async def update_deal(db: AsyncSession, deal_id: int, payload: schemas.DealUpdat
         update_data['client_id'] = payload.client_id
     if payload.status is not None:
         try:
-            update_data['status'] = models.DealStatus(payload.status)
+            status_enum = models.DealStatus(payload.status)
+            update_data['status'] = status_enum
+            # Set closed_at when deal is finalized (moved to final_account status)
+            if status_enum == models.DealStatus.final_account:
+                from datetime import datetime, timezone
+                update_data['closed_at'] = datetime.now(timezone.utc)
         except ValueError:
             raise ValueError(f"Invalid status: {payload.status}")
     if payload.total_price is not None:

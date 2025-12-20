@@ -1,5 +1,5 @@
 import calendar
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from decimal import Decimal
 from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,8 +19,9 @@ async def calculate_monthly_finances(
     first_day = date(year, month, 1)
     last_day = date(year, month, calendar.monthrange(year, month)[1])
     
-    start_datetime = datetime.combine(first_day, datetime.min.time())
-    end_datetime = datetime.combine(last_day, datetime.max.time())
+    # Use timezone-aware datetimes for PostgreSQL compatibility
+    start_datetime = datetime.combine(first_day, datetime.min.time(), tzinfo=timezone.utc)
+    end_datetime = datetime.combine(last_day, datetime.max.time(), tzinfo=timezone.utc)
     
     return await calculate_financials(
         db=db,
@@ -39,8 +40,9 @@ async def calculate_period_finances(
     """
     Рассчитывает финансовые показатели за произвольный период.
     """
-    start_datetime = datetime.combine(start_date, datetime.min.time())
-    end_datetime = datetime.combine(end_date, datetime.max.time())
+    # Use timezone-aware datetimes for PostgreSQL compatibility
+    start_datetime = datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc)
+    end_datetime = datetime.combine(end_date, datetime.max.time(), tzinfo=timezone.utc)
     
     return await calculate_financials(
         db=db,

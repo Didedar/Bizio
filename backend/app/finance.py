@@ -1,6 +1,6 @@
 from typing import Optional, Dict, Any
 from decimal import Decimal, ROUND_HALF_UP
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
@@ -8,6 +8,15 @@ import logging
 from . import models
 
 logger = logging.getLogger(__name__)
+
+
+def ensure_timezone_aware(dt: Optional[datetime]) -> Optional[datetime]:
+    """Ensure datetime is timezone-aware (UTC). Returns None if input is None."""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
 
 
 def to_decimal(value) -> Decimal:
@@ -33,8 +42,12 @@ async def aggregate_revenue_and_cogs(
 ) -> Dict[str, Decimal]:
     """
     Агрегирует выручку (revenue) и себестоимость (COGS) из закрытых сделок.
-    Фильтрует по статусу 'final_account' и опционально по датам.
+    Фильтрует по статусу 'final_account' и опционально по датам closed_at.
     """
+    
+    # Ensure dates are timezone-aware for PostgreSQL compatibility
+    start_date = ensure_timezone_aware(start_date)
+    end_date = ensure_timezone_aware(end_date)
     
     logger.info(f"🔍 aggregate_revenue_and_cogs called with tenant_id={tenant_id}, start_date={start_date}, end_date={end_date}")
     
@@ -46,20 +59,20 @@ async def aggregate_revenue_and_cogs(
     
     if all_deals:
         for deal in all_deals[:5]:  # Показываем первые 5
-            logger.info(f"  Deal ID={deal.id}, status={deal.status}, total_price={deal.total_price}")
+            logger.info(f"  Deal ID={deal.id}, status={deal.status}, total_price={deal.total_price}, closed_at={deal.closed_at}")
     
-    # Фильтруем только завершённые сделки (final_account)
+    # Фильтруем только завершённые сделки (final_account) по дате closed_at
     base_filter = [
         models.Deal.tenant_id == tenant_id,
         models.Deal.status == models.DealStatus.final_account,
     ]
     
     if start_date:
-        base_filter.append(models.Deal.created_at >= start_date)
+        base_filter.append(models.Deal.closed_at >= start_date)
     if end_date:
-        base_filter.append(models.Deal.created_at <= end_date)
+        base_filter.append(models.Deal.closed_at <= end_date)
 
-    logger.info(f"🔎 Filtering with: tenant_id={tenant_id}, status=final_account")
+    logger.info(f"🔎 Filtering with: tenant_id={tenant_id}, status=final_account, closed_at range=[{start_date}, {end_date}]")
 
     revenue_query = select(
         func.coalesce(func.sum(models.Deal.total_price), 0)
