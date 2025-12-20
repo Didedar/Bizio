@@ -142,3 +142,73 @@ async def read_users_me(current_user: models.User = Depends(get_current_user), d
     await db.refresh(current_user, ["tenants"])
     return current_user
 
+
+class SetupDemoResponse(BaseModel):
+    message: str
+    tenant_id: int
+    user_email: str
+    user_password: str
+
+
+@router.post("/setup-demo", response_model=SetupDemoResponse)
+async def setup_demo(db: AsyncSession = Depends(get_db)):
+    """
+    Initialize the database with a demo tenant and admin user.
+    This endpoint is idempotent - calling it multiple times will return the existing setup.
+    
+    Returns credentials for the demo account.
+    """
+    demo_email = "admin@demo.com"
+    demo_password = "demo123456"
+    demo_tenant_name = "Demo Company"
+    demo_tenant_code = "DEMO"
+    
+    # Check if demo user already exists
+    existing_user = await crud.get_user_by_email(db, demo_email)
+    if existing_user:
+        # Load tenants
+        await db.refresh(existing_user, ["tenants"])
+        tenant_id = existing_user.tenants[0].id if existing_user.tenants else 1
+        return SetupDemoResponse(
+            message="Demo account already exists. Use these credentials to login.",
+            tenant_id=tenant_id,
+            user_email=demo_email,
+            user_password=demo_password
+        )
+    
+    # Create demo tenant
+    try:
+        tenant = await crud.create_tenant(db, name=demo_tenant_name, code=demo_tenant_code)
+    except ValueError:
+        # Tenant might already exist
+        from sqlalchemy import select
+        result = await db.execute(
+            select(models.Tenant).where(models.Tenant.code == demo_tenant_code)
+        )
+        tenant = result.scalar_one_or_none()
+        if not tenant:
+            # Create without code
+            tenant = await crud.create_tenant(db, name=demo_tenant_name, code=None)
+    
+    # Create demo user
+    hashed_password = get_password_hash(demo_password)
+    user = await crud.create_user(
+        db,
+        email=demo_email,
+        full_name="Demo Admin",
+        hashed_password=hashed_password,
+        role=models.UserRole.admin
+    )
+    
+    # Associate user with tenant
+    await db.refresh(user, ["tenants"])
+    user.tenants.append(tenant)
+    await db.commit()
+    
+    return SetupDemoResponse(
+        message="Demo account created successfully! Use these credentials to login.",
+        tenant_id=tenant.id,
+        user_email=demo_email,
+        user_password=demo_password
+    )
+
