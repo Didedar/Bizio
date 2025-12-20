@@ -401,3 +401,60 @@
 .recharts-legend-item-text {
     color: #374151 !important;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .dashboard-page {
+        padding: 16px;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .header-content h1 {
+        font-size: 20px;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
+
+    .btn-refresh {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .summary-card {
+        padding: 16px;
+    }
+
+    .card-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .card-value {
+        font-size: 20px;
+    }
+
+    .chart-card {
+        padding: 16px;
+    }
+
+    .chart-header h3 {
+        font-size: 14px;
+    }
+
+    .table-header {
+        padding: 12px 16px;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+}

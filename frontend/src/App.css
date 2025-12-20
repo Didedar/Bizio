@@ -103,3 +103,18 @@ textarea {
   font-size: 14px;
   font-weight: 500;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .app-main {
+    margin-left: 0;
+  }
+
+  .app-main.sidebar-collapsed {
+    margin-left: 0;
+  }
+
+  .app-content {
+    margin-top: 56px;
+  }
+}

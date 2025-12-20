@@ -4,9 +4,10 @@ import './Header.css';
 
 interface HeaderProps {
   isSidebarCollapsed?: boolean;
+  onMenuClick?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ isSidebarCollapsed = false }) => {
+const Header: React.FC<HeaderProps> = ({ isSidebarCollapsed = false, onMenuClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -26,10 +27,19 @@ const Header: React.FC<HeaderProps> = ({ isSidebarCollapsed = false }) => {
     }
   };
 
+  const MenuButton = () => (
+    <button className="mobile-menu-btn" onClick={onMenuClick} aria-label="Open menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M3 6H21M3 12H21M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    </button>
+  );
+
   // Don't show tabs if not on CRM page
   if (!isCrmPage) {
     return (
       <div className={`app-header ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <MenuButton />
         <div className="header-left"></div>
       </div>
     );
@@ -37,6 +47,7 @@ const Header: React.FC<HeaderProps> = ({ isSidebarCollapsed = false }) => {
 
   return (
     <div className={`app-header ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <MenuButton />
       <div className="header-left">
         <nav className="header-nav">
           {crmTabs.map((tab) => {
@@ -58,4 +69,3 @@ const Header: React.FC<HeaderProps> = ({ isSidebarCollapsed = false }) => {
 };
 
 export default Header;
-

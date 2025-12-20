@@ -310,3 +310,56 @@
   background: #94a3b8;
 }
 
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .kanban-board {
+    gap: 12px;
+    padding: 16px;
+    min-height: calc(100vh - 260px);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .kanban-column {
+    min-width: 280px;
+    max-width: 280px;
+    max-height: calc(100vh - 300px);
+  }
+
+  .kanban-column-header {
+    padding: 12px;
+  }
+
+  .column-title {
+    font-size: 12px;
+  }
+
+  .kanban-column-content {
+    padding: 8px;
+    gap: 10px;
+    min-height: 150px;
+  }
+
+  .kanban-card {
+    padding: 12px;
+  }
+
+  .company-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+
+  .card-amount {
+    font-size: 16px;
+  }
+
+  .info-row {
+    font-size: 11px;
+  }
+
+  .user-avatar-small {
+    width: 20px;
+    height: 20px;
+    font-size: 9px;
+  }
+}

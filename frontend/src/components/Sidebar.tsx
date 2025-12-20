@@ -7,9 +7,17 @@ interface SidebarProps {
   currentSection?: string;
   onSectionChange?: (section: string) => void;
   onCollapseChange?: (collapsed: boolean) => void;
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSectionChange, onCollapseChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  currentSection,
+  onSectionChange,
+  onCollapseChange,
+  isMobileOpen = false,
+  onMobileClose
+}) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [crmExpanded, setCrmExpanded] = useState(false);
   const navigate = useNavigate();
@@ -23,6 +31,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSectionChange, onCo
       onSectionChange?.('crm');
     }
   }, [location.pathname, onSectionChange]);
+
+  // Close mobile sidebar on navigation
+  useEffect(() => {
+    if (isMobileOpen) {
+      onMobileClose?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   const handleToggle = () => {
     const newState = !isCollapsed;
@@ -184,57 +200,80 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSectionChange, onCo
   };
 
   return (
-    <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-      <div className="sidebar-header">
-        <button className="sidebar-toggle" onClick={handleToggle}>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M3 5H17M3 10H17M3 15H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
-        {!isCollapsed && <div className="sidebar-logo">Bizio</div>}
-      </div>
+    <>
+      <div
+        className={`sidebar-backdrop ${isMobileOpen ? 'visible' : ''}`}
+        onClick={onMobileClose}
+      />
+      <div className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
+        <div className="sidebar-header">
+          <button className="sidebar-toggle" onClick={handleToggle}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M3 5H17M3 10H17M3 15H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+          {!isCollapsed && <div className="sidebar-logo">Bizio</div>}
+        </div>
 
-      <nav className="sidebar-nav">
-        <div className="nav-section">
-          <div className="nav-section-title">Overview</div>
-          {menuItems.overview.map((item) => {
-            if (item.id === 'crm') {
-              return (
-                <div key={item.id}>
-                  <button
-                    className={`nav-item ${currentSection === item.id ? 'active' : ''}`}
-                    onClick={handleCrmClick}
-                  >
-                    <span className="nav-icon">{getIcon(item.icon)}</span>
-                    {!isCollapsed && <span className="nav-label">{item.label}</span>}
-                    {!isCollapsed && (
-                      <span className={`nav-arrow ${crmExpanded ? 'expanded' : ''}`}>
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </span>
+        <nav className="sidebar-nav">
+          <div className="nav-section">
+            <div className="nav-section-title">Overview</div>
+            {menuItems.overview.map((item) => {
+              if (item.id === 'crm') {
+                return (
+                  <div key={item.id}>
+                    <button
+                      className={`nav-item ${currentSection === item.id ? 'active' : ''}`}
+                      onClick={handleCrmClick}
+                    >
+                      <span className="nav-icon">{getIcon(item.icon)}</span>
+                      {!isCollapsed && <span className="nav-label">{item.label}</span>}
+                      {!isCollapsed && (
+                        <span className={`nav-arrow ${crmExpanded ? 'expanded' : ''}`}>
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </span>
+                      )}
+                    </button>
+                    {!isCollapsed && crmExpanded && (
+                      <div className="nav-submenu">
+                        {crmSubItems.map((subItem) => {
+                          const isActive = location.pathname === subItem.path;
+                          return (
+                            <button
+                              key={subItem.id}
+                              className={`nav-subitem ${isActive ? 'active' : ''}`}
+                              onClick={() => handleCrmSubItemClick(subItem.path)}
+                            >
+                              <span className="nav-label">{subItem.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     )}
-                  </button>
-                  {!isCollapsed && crmExpanded && (
-                    <div className="nav-submenu">
-                      {crmSubItems.map((subItem) => {
-                        const isActive = location.pathname === subItem.path;
-                        return (
-                          <button
-                            key={subItem.id}
-                            className={`nav-subitem ${isActive ? 'active' : ''}`}
-                            onClick={() => handleCrmSubItemClick(subItem.path)}
-                          >
-                            <span className="nav-label">{subItem.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                  </div>
+                );
+              }
+              return (
+                <button
+                  key={item.id}
+                  className={`nav-item ${currentSection === item.id ? 'active' : ''}`}
+                  onClick={() => {
+                    onSectionChange?.(item.id);
+                    navigate(`/${item.id}`);
+                  }}
+                >
+                  <span className="nav-icon">{getIcon(item.icon)}</span>
+                  {!isCollapsed && <span className="nav-label">{item.label}</span>}
+                </button>
               );
-            }
-            return (
+            })}
+          </div>
+
+          <div className="nav-section">
+            <div className="nav-section-title">Tools</div>
+            {menuItems.tools.map((item) => (
               <button
                 key={item.id}
                 className={`nav-item ${currentSection === item.id ? 'active' : ''}`}
@@ -246,68 +285,51 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSectionChange, onCo
                 <span className="nav-icon">{getIcon(item.icon)}</span>
                 {!isCollapsed && <span className="nav-label">{item.label}</span>}
               </button>
-            );
-          })}
-        </div>
-
-        <div className="nav-section">
-          <div className="nav-section-title">Tools</div>
-          {menuItems.tools.map((item) => (
-            <button
-              key={item.id}
-              className={`nav-item ${currentSection === item.id ? 'active' : ''}`}
-              onClick={() => {
-                onSectionChange?.(item.id);
-                navigate(`/${item.id}`);
-              }}
-            >
-              <span className="nav-icon">{getIcon(item.icon)}</span>
-              {!isCollapsed && <span className="nav-label">{item.label}</span>}
-            </button>
-          ))}
-        </div>
-
-        <div className="nav-section">
-          <div className="nav-section-title">Metrics</div>
-          {menuItems.metrics.map((item) => (
-            <button
-              key={item.id}
-              className={`nav-item ${currentSection === item.id ? 'active' : ''}`}
-              onClick={() => {
-                onSectionChange?.(item.id);
-                navigate(`/${item.id}`);
-              }}
-            >
-              <span className="nav-icon">{getIcon(item.icon)}</span>
-              {!isCollapsed && <span className="nav-label">{item.label}</span>}
-            </button>
-          ))}
-        </div>
-      </nav>
-
-      <div className="sidebar-footer">
-        <button className="nav-item">
-          <span className="nav-icon">{getIcon('question')}</span>
-          {!isCollapsed && <span className="nav-label">Help Center</span>}
-        </button>
-        <button className="nav-item">
-          <span className="nav-icon">{getIcon('gear')}</span>
-          {!isCollapsed && <span className="nav-label">Settings</span>}
-        </button>
-        {!isCollapsed && user && (
-          <div className="sidebar-user" onClick={handleProfileClick}>
-            <div className="user-avatar">
-              <span>{getInitials()}</span>
-            </div>
-            <div className="user-info">
-              <div className="user-name">{user.full_name || user.email}</div>
-              <div className="user-plan">{user.tenants && user.tenants.length > 0 ? user.tenants[0].name : 'No tenant'}</div>
-              <div className="user-email">{user.email}</div>
-            </div>
+            ))}
           </div>
-        )}
+
+          <div className="nav-section">
+            <div className="nav-section-title">Metrics</div>
+            {menuItems.metrics.map((item) => (
+              <button
+                key={item.id}
+                className={`nav-item ${currentSection === item.id ? 'active' : ''}`}
+                onClick={() => {
+                  onSectionChange?.(item.id);
+                  navigate(`/${item.id}`);
+                }}
+              >
+                <span className="nav-icon">{getIcon(item.icon)}</span>
+                {!isCollapsed && <span className="nav-label">{item.label}</span>}
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        <div className="sidebar-footer">
+          <button className="nav-item">
+            <span className="nav-icon">{getIcon('question')}</span>
+            {!isCollapsed && <span className="nav-label">Help Center</span>}
+          </button>
+          <button className="nav-item">
+            <span className="nav-icon">{getIcon('gear')}</span>
+            {!isCollapsed && <span className="nav-label">Settings</span>}
+          </button>
+          {!isCollapsed && user && (
+            <div className="sidebar-user" onClick={handleProfileClick}>
+              <div className="user-avatar">
+                <span>{getInitials()}</span>
+              </div>
+              <div className="user-info">
+                <div className="user-name">{user.full_name || user.email}</div>
+                <div className="user-plan">{user.tenants && user.tenants.length > 0 ? user.tenants[0].name : 'No tenant'}</div>
+                <div className="user-email">{user.email}</div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

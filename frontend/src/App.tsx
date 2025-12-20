@@ -48,6 +48,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 function AppContent() {
   const [currentSection, setCurrentSection] = useState('crm');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const location = useLocation();
 
 
@@ -83,6 +84,14 @@ function AppContent() {
     }
   }, [location.pathname]);
 
+  const handleMobileMenuToggle = () => {
+    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+  };
+
+  const handleMobileSidebarClose = () => {
+    setIsMobileSidebarOpen(false);
+  };
+
   // Don't show sidebar and header on auth pages
   if (isAuthPage) {
     return (
@@ -99,10 +108,13 @@ function AppContent() {
         currentSection={currentSection}
         onSectionChange={setCurrentSection}
         onCollapseChange={setIsSidebarCollapsed}
+        isMobileOpen={isMobileSidebarOpen}
+        onMobileClose={handleMobileSidebarClose}
       />
       <div className={`app-main ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <Header
           isSidebarCollapsed={isSidebarCollapsed}
+          onMenuClick={handleMobileMenuToggle}
         />
         <div className="app-content">
           <Routes>

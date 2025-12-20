@@ -82,3 +82,72 @@
   /* Если вернешь профиль, закрепи его справа */
   right: 24px;
 }
+
+/* Mobile Menu Button */
+.mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background-color: transparent;
+  color: #374151;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.mobile-menu-btn:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .app-header {
+    left: 0;
+    padding: 0 16px;
+    height: 56px;
+    justify-content: flex-start;
+  }
+
+  .app-header.sidebar-collapsed {
+    left: 0;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    margin-right: 12px;
+  }
+
+  .header-left {
+    flex: 1;
+    justify-content: flex-start;
+  }
+
+  .header-nav {
+    gap: 16px;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .header-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .header-tab {
+    font-size: 13px;
+    padding: 0 2px;
+    white-space: nowrap;
+  }
+
+  .header-right {
+    position: static;
+    gap: 8px;
+  }
+}

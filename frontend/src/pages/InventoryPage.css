@@ -505,3 +505,66 @@ form {
 .text-muted {
     color: #999;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .inventory-page {
+        padding: 16px;
+    }
+
+    .inventory-header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .inventory-title {
+        font-size: 20px;
+    }
+
+    .inventory-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .toolbar-left {
+        max-width: 100%;
+    }
+
+    .toolbar-right {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .inventory-table th,
+    .inventory-table td {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .actions-column {
+        width: auto;
+    }
+
+    .table-actions {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .action-btn {
+        min-width: unset;
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .modal-content {
+        border-radius: 0;
+        max-height: 100vh;
+        margin: 0;
+        max-width: 100%;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}

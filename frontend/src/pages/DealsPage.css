@@ -5,9 +5,10 @@
   /* ИЗМЕНЕНО: Фиксируем высоту страницы. 
      64px - это примерная высота вашего главного навбара приложения.
      Это убирает скролл у body. */
-  height: calc(100vh - 64px); 
+  height: calc(100vh - 64px);
   background-color: #f9fafb;
-  overflow: hidden; /* Запрещаем контенту вылезать за пределы */
+  overflow: hidden;
+  /* Запрещаем контенту вылезать за пределы */
 }
 
 /* --- ЦЕНТРИРОВАНИЕ КОНТЕНТА --- */
@@ -34,8 +35,9 @@
 .sticky-header-container {
   /* ИЗМЕНЕНО: Больше не sticky. Просто блок сверху. */
   position: relative;
-  z-index: 20; 
-  flex-shrink: 0; /* Запрещаем сжиматься при недостатке места */
+  z-index: 20;
+  flex-shrink: 0;
+  /* Запрещаем сжиматься при недостатке места */
   background-color: #f9fafb;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
@@ -250,8 +252,13 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spinning {
@@ -261,25 +268,27 @@
 /* --- SCROLLABLE CONTENT AREA --- */
 /* --- SCROLLABLE CONTENT AREA --- */
 .deals-content {
-  flex: 1; 
+  flex: 1;
   position: relative;
-  
+
   /* ИЗМЕНЕНО: Увеличили отступ сверху с 24px до 40px. 
      Теперь между хедером и колонками будет виден серый фон страницы. */
-  padding-top: 40px; 
-  
-  padding-bottom: 32px; /* Снизу тоже можно чуть добавить для симметрии */
-  
-  overflow-y: auto; 
+  padding-top: 40px;
+
+  padding-bottom: 32px;
+  /* Снизу тоже можно чуть добавить для симметрии */
+
+  overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;
 }
 
 .deals-content.kanban-view {
   /* ИЗМЕНЕНО: Настройки для канбана */
-  overflow-x: auto; /* Горизонтальный скролл всей доски */
+  overflow-x: auto;
+  /* Горизонтальный скролл всей доски */
   /* overflow-y: hidden;  <-- Если хотите, чтобы скроллились только колонки внутри, раскомментируйте это */
-  
+
   display: flex;
   flex-direction: column;
 }
@@ -294,7 +303,8 @@
 .deals-content.kanban-view .content-container {
   min-width: 100%;
   display: flex;
-  align-items: flex-start; /* Колонки прижимаются к верху */
+  align-items: flex-start;
+  /* Колонки прижимаются к верху */
 }
 
 /* --- STATES (Loading, Empty, Error) --- */
@@ -469,6 +479,7 @@
 
 /* --- RESPONSIVE --- */
 @media (max-width: 1024px) {
+
   .deals-header-content,
   .deals-toolbar-content {
     flex-direction: column;
@@ -485,5 +496,61 @@
   .toolbar-right {
     flex-wrap: wrap;
     justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .deals-page {
+    height: calc(100vh - 56px);
+  }
+
+  .page-container {
+    padding: 0 16px;
+  }
+
+  .deals-header {
+    padding: 16px 0;
+  }
+
+  .deals-title {
+    font-size: 22px;
+  }
+
+  .deals-count {
+    font-size: 13px;
+  }
+
+  .btn-create-deal {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 20px;
+  }
+
+  .deals-toolbar {
+    padding: 12px 0;
+  }
+
+  .toolbar-btn {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .deals-content {
+    padding-top: 24px;
+    padding-bottom: 16px;
+  }
+
+  .deals-table th,
+  .deals-table td {
+    padding: 12px 12px;
+    font-size: 13px;
+  }
+
+  .empty-state {
+    min-height: 300px;
+  }
+
+  .empty-state-content h2 {
+    font-size: 20px;
   }
 }
