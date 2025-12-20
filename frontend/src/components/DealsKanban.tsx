@@ -230,7 +230,7 @@ const DealsKanban: React.FC<DealsKanbanProps> = ({ deals, onDealClick, onStatusC
                       )}
                     </div>
                     <div className="card-meta">
-                      <span className="last-updated">{formatDate(deal.created_at)}</span>
+                      <span className="last-updated">{formatDate(deal.completion_date || deal.closed_at || deal.created_at)}</span>
                     </div>
                   </div>
 
