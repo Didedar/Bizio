@@ -29,8 +29,8 @@ class DealItemRead(DealItemBase):
     unit_price: Decimal = Field(..., description="Selling price snapshot")
     total_price: Decimal = Field(..., description="quantity * unit_price")
     total_cost: Decimal = Field(..., description="quantity * unit_cost")
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     product: Optional[ProductRead] = None  
     
     model_config = ConfigDict(from_attributes=True)
@@ -213,8 +213,8 @@ class DealRead(DealBase):
     total_price: Decimal = Field(..., description="Total revenue")
     total_cost: Decimal = Field(..., description="Total COGS")
     margin: Decimal = Field(..., description="Profit (total_price - total_cost)")
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     closed_at: Optional[datetime] = None
     items: List[DealItemRead] = Field(default_factory=list, description="Deal line items")
     client: Optional[ClientRead] = None

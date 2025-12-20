@@ -22,7 +22,7 @@ class UserUpdate(BaseModel):
 class UserRead(UserBase):
     id: int
     is_active: bool
-    created_at: datetime
+    created_at: Optional[datetime] = None
     tenants: Optional[List["TenantRead"]] = None
     
     model_config = ConfigDict(from_attributes=True)
@@ -32,7 +32,7 @@ class UserSimple(UserBase):
     """Simplified user schema without tenants relationship for use in nested objects"""
     id: int
     is_active: bool
-    created_at: datetime
+    created_at: Optional[datetime] = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -51,7 +51,7 @@ class TenantRead(TenantBase):
     id: int
     code: str
     is_active: bool
-    created_at: datetime
+    created_at: Optional[datetime] = None
     
     model_config = ConfigDict(from_attributes=True)
 

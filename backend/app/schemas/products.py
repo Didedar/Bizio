@@ -33,8 +33,8 @@ class ProductRead(ProductBase):
     id: int
     tenant_id: int
     quantity: Decimal = Field(default=Decimal("0"), description="Total quantity in stock across all locations")
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -58,7 +58,7 @@ class InventoryItemRead(InventoryItemBase):
     product_id: int
     tenant_id: int
     remaining_quantity: Decimal = Field(..., description="Quantity still available for FIFO")
-    created_at: datetime
+    created_at: Optional[datetime] = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -69,7 +69,7 @@ class InventoryRead(BaseModel):
     location: Optional[str] = None
     quantity: Decimal = Field(..., description="Total quantity in stock")
     reserved: Decimal = Field(..., description="Quantity reserved for orders")
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
     
     model_config = ConfigDict(from_attributes=True)
 

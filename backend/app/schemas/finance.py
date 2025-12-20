@@ -28,7 +28,7 @@ class ExpenseRead(ExpenseBase):
     id: int
     tenant_id: int
     user_id: Optional[int] = None
-    created_at: datetime
+    created_at: Optional[datetime] = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -47,7 +47,7 @@ class FinancialSettingsCreate(BaseModel):
 class FinancialSettingsRead(FinancialSettingsBase):
     id: int
     tenant_id: int
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
 
 class FinanceDashboard(BaseModel):
