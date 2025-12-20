@@ -84,19 +84,30 @@ class DealCreate(DealBase):
     @field_validator('start_date', 'completion_date', mode='before')
     @classmethod
     def parse_datetime(cls, v):
+        from datetime import timezone as tz
         if v is None or v == '':
             return None
+        if isinstance(v, datetime):
+            # Ensure datetime is timezone-aware
+            if v.tzinfo is None:
+                return v.replace(tzinfo=tz.utc)
+            return v
         if isinstance(v, str):
             try:
                 # Try parsing ISO format (handles both with and without timezone)
                 if 'Z' in v:
                     v = v.replace('Z', '+00:00')
-                return datetime.fromisoformat(v)
+                parsed = datetime.fromisoformat(v)
+                # Ensure timezone-aware
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=tz.utc)
+                return parsed
             except ValueError:
                 # Try other common formats
                 for fmt in ['%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d']:
                     try:
-                        return datetime.strptime(v, fmt)
+                        parsed = datetime.strptime(v, fmt)
+                        return parsed.replace(tzinfo=tz.utc)
                     except ValueError:
                         continue
                 return None
@@ -159,17 +170,27 @@ class DealUpdate(BaseModel):
     @field_validator('start_date', 'completion_date', mode='before')
     @classmethod
     def parse_datetime(cls, v):
+        from datetime import timezone as tz
         if v is None or v == '':
             return None
+        if isinstance(v, datetime):
+            # Ensure datetime is timezone-aware
+            if v.tzinfo is None:
+                return v.replace(tzinfo=tz.utc)
+            return v
         if isinstance(v, str):
             try:
                 if 'Z' in v:
                     v = v.replace('Z', '+00:00')
-                return datetime.fromisoformat(v)
+                parsed = datetime.fromisoformat(v)
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=tz.utc)
+                return parsed
             except ValueError:
                 for fmt in ['%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d']:
                     try:
-                        return datetime.strptime(v, fmt)
+                        parsed = datetime.strptime(v, fmt)
+                        return parsed.replace(tzinfo=tz.utc)
                     except ValueError:
                         continue
                 return None

@@ -1,9 +1,14 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum as PyEnum
-from sqlalchemy import Column, Integer, String, Numeric, DateTime, ForeignKey, Enum, Index, JSON, Boolean, Table, Text
+from sqlalchemy import Column, Integer, String, Numeric, DateTime, ForeignKey, Enum, Index, JSON, Boolean, Table, Text, func
 from sqlalchemy.orm import relationship
 from app.db import Base
+
+
+def utc_now():
+    """Return timezone-aware UTC datetime."""
+    return datetime.now(timezone.utc)
 
 
 class DealStatus(str, PyEnum):
@@ -41,8 +46,8 @@ class Deal(Base):
     status = Column(Enum(DealStatus), default=DealStatus.new, nullable=False, index=True)
     
     # Additional fields
-    start_date = Column(DateTime, nullable=True)
-    completion_date = Column(DateTime, nullable=True)
+    start_date = Column(DateTime(timezone=True), nullable=True)
+    completion_date = Column(DateTime(timezone=True), nullable=True)
     source = Column(String(128), nullable=True, index=True)
     source_details = Column(String(1024), nullable=True)
     deal_type = Column(String(64), nullable=True)  # Sale, Service, etc.
@@ -53,9 +58,9 @@ class Deal(Base):
     
     extra_data = Column(JSON, nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    closed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=utc_now)
+    closed_at = Column(DateTime(timezone=True), nullable=True)
 
 
     tenant = relationship("Tenant", back_populates="deals")
@@ -90,8 +95,8 @@ class DealItem(Base):
     total_cost = Column(Numeric(precision=18, scale=2), nullable=False)
     
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=utc_now)
 
     deal = relationship("Deal", back_populates="items")
     product = relationship("Product", back_populates="deal_items")
