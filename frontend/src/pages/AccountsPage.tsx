@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { clientsApi, dealsApi } from '../api/client';
 import type { Client, ClientCreate, Deal } from '../types';
-import SortDropdown, { SortOption } from '../components/SortDropdown';
 import ColumnsDropdown, { ColumnConfig } from '../components/ColumnsDropdown';
+import SortDropdown, { SortOption } from '../components/SortDropdown';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import { useAuth } from '../contexts/AuthContext';
+import { formatDate, getSafeTimestamp } from '../utils/dateUtils';
 import './AccountsPage.css';
 
 interface CreateAccountModalProps {
@@ -297,12 +298,18 @@ const AccountsPage: React.FC = () => {
     // Date filter
     if (filters.dateFrom) {
       const fromDate = new Date(filters.dateFrom);
-      result = result.filter(account => new Date(account.created_at) >= fromDate);
+      result = result.filter(account => {
+        const accountDate = getSafeTimestamp(account.created_at);
+        return accountDate > 0 && accountDate >= fromDate.getTime();
+      });
     }
     if (filters.dateTo) {
       const toDate = new Date(filters.dateTo);
       toDate.setHours(23, 59, 59, 999);
-      result = result.filter(account => new Date(account.created_at) <= toDate);
+      result = result.filter(account => {
+        const accountDate = getSafeTimestamp(account.created_at);
+        return accountDate > 0 && accountDate <= toDate.getTime();
+      });
     }
 
     // Email filter
@@ -357,8 +364,8 @@ const AccountsPage: React.FC = () => {
           break;
         case 'created_at':
         default:
-          aValue = new Date(a.created_at).getTime();
-          bValue = new Date(b.created_at).getTime();
+          aValue = getSafeTimestamp(a.created_at);
+          bValue = getSafeTimestamp(b.created_at);
           break;
       }
 
@@ -402,13 +409,7 @@ const AccountsPage: React.FC = () => {
     setFilters(emptyFilters);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+
 
   const formatCurrency = (amount: number, currency: string = 'KZT') => {
     return new Intl.NumberFormat('en-US', {

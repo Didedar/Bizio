@@ -17,6 +17,7 @@ import {
     Area,
     AreaChart,
 } from 'recharts';
+import { formatDate } from '../utils/dateUtils';
 import './DashboardPage.css';
 
 const DashboardPage: React.FC = () => {
@@ -58,13 +59,7 @@ const DashboardPage: React.FC = () => {
         return new Intl.NumberFormat('en-US').format(num);
     };
 
-    const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-    };
+
 
     const getStatusLabel = (status: string) => {
         const found = DEAL_STATUSES.find(s => s.value === status);

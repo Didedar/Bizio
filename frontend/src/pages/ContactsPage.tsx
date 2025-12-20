@@ -5,6 +5,7 @@ import SortDropdown, { SortOption } from '../components/SortDropdown';
 import ColumnsDropdown, { ColumnConfig } from '../components/ColumnsDropdown';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import { useAuth } from '../contexts/AuthContext';
+import { formatDate, getSafeTimestamp } from '../utils/dateUtils';
 import './ContactsPage.css';
 
 interface CreateContactModalProps {
@@ -226,12 +227,18 @@ const ContactsPage: React.FC = () => {
     // Date filter
     if (filters.dateFrom) {
       const fromDate = new Date(filters.dateFrom);
-      result = result.filter(contact => new Date(contact.created_at) >= fromDate);
+      result = result.filter(contact => {
+        const contactDate = getSafeTimestamp(contact.created_at);
+        return contactDate > 0 && contactDate >= fromDate.getTime();
+      });
     }
     if (filters.dateTo) {
       const toDate = new Date(filters.dateTo);
       toDate.setHours(23, 59, 59, 999);
-      result = result.filter(contact => new Date(contact.created_at) <= toDate);
+      result = result.filter(contact => {
+        const contactDate = getSafeTimestamp(contact.created_at);
+        return contactDate > 0 && contactDate <= toDate.getTime();
+      });
     }
 
     // Email filter
@@ -274,8 +281,8 @@ const ContactsPage: React.FC = () => {
           break;
         case 'created_at':
         default:
-          aValue = new Date(a.created_at).getTime();
-          bValue = new Date(b.created_at).getTime();
+          aValue = getSafeTimestamp(a.created_at);
+          bValue = getSafeTimestamp(b.created_at);
           break;
       }
 
@@ -318,13 +325,7 @@ const ContactsPage: React.FC = () => {
     setFilters(emptyFilters);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+
 
   return (
     <div className="contacts-page">

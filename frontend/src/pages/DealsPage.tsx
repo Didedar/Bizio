@@ -10,6 +10,7 @@ import SortDropdown, { SortOption } from '../components/SortDropdown';
 import ColumnsDropdown, { ColumnConfig } from '../components/ColumnsDropdown';
 import { useDealModal } from '../contexts/DealModalContext';
 import { useAuth } from '../contexts/AuthContext';
+import { formatDate, getSafeTimestamp } from '../utils/dateUtils';
 import './DealsPage.css';
 
 const DealsPage: React.FC = () => {
@@ -160,12 +161,18 @@ const DealsPage: React.FC = () => {
     // Date filter
     if (filters.dateFrom) {
       const fromDate = new Date(filters.dateFrom);
-      result = result.filter(deal => new Date(deal.created_at) >= fromDate);
+      result = result.filter(deal => {
+        const dealDate = getSafeTimestamp(deal.created_at);
+        return dealDate > 0 && dealDate >= fromDate.getTime();
+      });
     }
     if (filters.dateTo) {
       const toDate = new Date(filters.dateTo);
       toDate.setHours(23, 59, 59, 999); // End of day
-      result = result.filter(deal => new Date(deal.created_at) <= toDate);
+      result = result.filter(deal => {
+        const dealDate = getSafeTimestamp(deal.created_at);
+        return dealDate > 0 && dealDate <= toDate.getTime();
+      });
     }
 
     // Client name filter
@@ -205,8 +212,8 @@ const DealsPage: React.FC = () => {
           break;
         case 'created_at':
         default:
-          aValue = new Date(a.created_at).getTime();
-          bValue = new Date(b.created_at).getTime();
+          aValue = getSafeTimestamp(a.created_at);
+          bValue = getSafeTimestamp(b.created_at);
           break;
       }
 
@@ -230,13 +237,7 @@ const DealsPage: React.FC = () => {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {

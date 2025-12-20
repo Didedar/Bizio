@@ -5,6 +5,7 @@ import SortDropdown, { SortOption } from '../components/SortDropdown';
 import ColumnsDropdown, { ColumnConfig } from '../components/ColumnsDropdown';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import { useAuth } from '../contexts/AuthContext';
+import { formatDate, getSafeTimestamp } from '../utils/dateUtils';
 import './ProductsPage.css';
 
 interface CreateProductModalProps {
@@ -287,12 +288,18 @@ const ProductsPage: React.FC = () => {
     // Date filter
     if (filters.dateFrom) {
       const fromDate = new Date(filters.dateFrom);
-      result = result.filter(product => new Date(product.created_at) >= fromDate);
+      result = result.filter(product => {
+        const productDate = getSafeTimestamp(product.created_at);
+        return productDate > 0 && productDate >= fromDate.getTime();
+      });
     }
     if (filters.dateTo) {
       const toDate = new Date(filters.dateTo);
       toDate.setHours(23, 59, 59, 999);
-      result = result.filter(product => new Date(product.created_at) <= toDate);
+      result = result.filter(product => {
+        const productDate = getSafeTimestamp(product.created_at);
+        return productDate > 0 && productDate <= toDate.getTime();
+      });
     }
 
     // Category filter
@@ -361,8 +368,8 @@ const ProductsPage: React.FC = () => {
           break;
         case 'created_at':
         default:
-          aValue = new Date(a.created_at).getTime();
-          bValue = new Date(b.created_at).getTime();
+          aValue = getSafeTimestamp(a.created_at);
+          bValue = getSafeTimestamp(b.created_at);
           break;
       }
 
@@ -418,13 +425,7 @@ const ProductsPage: React.FC = () => {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+
 
   return (
     <div className="products-page">

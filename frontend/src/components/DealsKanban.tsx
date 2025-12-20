@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { Deal, User } from '../types';
 import { DEAL_STATUSES } from '../types';
 import { dealsApi, usersApi } from '../api/client';
+import { isValidDate } from '../utils/dateUtils';
 import './DealsKanban.css';
 
 interface DealsKanbanProps {
@@ -68,7 +69,11 @@ const DealsKanban: React.FC<DealsKanbanProps> = ({ deals, onDealClick, onStatusC
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString || !isValidDate(dateString)) {
+      return 'N/A';
+    }
+
     const date = new Date(dateString);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -102,7 +107,7 @@ const DealsKanban: React.FC<DealsKanbanProps> = ({ deals, onDealClick, onStatusC
 
   // Get all unique statuses from deals (to show all statuses that have deals)
   const dealStatuses = new Set(deals.map(deal => deal.status));
-  
+
   // Also include main statuses even if they have no deals (for empty columns)
   const mainStatuses = ['new', 'in_progress', 'preparing_document', 'prepaid_account', 'at_work', 'final_account', 'won', 'lost', 'cancelled'];
   const allStatusesToShow = new Set([...mainStatuses, ...Array.from(dealStatuses)]);
