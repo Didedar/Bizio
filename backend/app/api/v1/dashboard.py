@@ -357,17 +357,20 @@ async def get_dashboard_stats(
     result = await db.execute(recent_deals_stmt)
     recent_deal_rows = result.scalars().all()
     
-    recent_deals = [
-        RecentDeal(
+    recent_deals = []
+    for deal in recent_deal_rows:
+        # Use completion_date -> closed_at -> created_at fallback chain
+        date_value = deal.completion_date or deal.closed_at or deal.created_at
+        date_str = date_value.isoformat() if date_value else ""
+        
+        recent_deals.append(RecentDeal(
             id=deal.id,
             title=deal.title,
             status=deal.status,
             total_price=float(deal.total_price),
             client_name=deal.client.name if deal.client else None,
-            created_at=deal.created_at.isoformat()
-        )
-        for deal in recent_deal_rows
-    ]
+            created_at=date_str
+        ))
     
     # =========================================================================
     # Return Complete Dashboard Stats
