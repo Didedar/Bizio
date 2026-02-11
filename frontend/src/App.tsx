@@ -12,6 +12,7 @@ import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import FinancePage from './pages/FinancePage';
 import DashboardPage from './pages/DashboardPage';
+import CopilotPage from './pages/CopilotPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import { DealModalProvider } from './contexts/DealModalContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -239,7 +240,7 @@ function AppContent() {
               path="/ai-agent"
               element={
                 <ProtectedRoute>
-                  <ComingSoonPage title="AI Agent" />
+                  <CopilotPage />
                 </ProtectedRoute>
               }
             />

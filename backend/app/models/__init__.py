@@ -15,6 +15,11 @@ from .products import Product, Inventory, InventoryItem
 from .deals import Deal, DealItem, DealStatus
 from .finance import Expense, FinancialSettings, AllocationRule, AllocationType
 from .suppliers import Supplier, SupplierOffer, PurchaseOrder, PurchaseOrderItem
+from .copilot import (
+    Document, DocumentType, DocumentChunk,
+    CopilotConversation, CopilotMessage, MessageRole,
+    DataFixSuggestion, DataFixStatus
+)
 
 # Export all models for "from app import models" usage
 __all__ = [
@@ -47,4 +52,14 @@ __all__ = [
     "SupplierOffer",
     "PurchaseOrder",
     "PurchaseOrderItem",
+    
+    # Copilot
+    "Document",
+    "DocumentType",
+    "DocumentChunk",
+    "CopilotConversation",
+    "CopilotMessage",
+    "MessageRole",
+    "DataFixSuggestion",
+    "DataFixStatus",
 ]

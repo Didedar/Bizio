@@ -39,6 +39,11 @@ class Tenant(Base):
     suppliers = relationship("Supplier", back_populates="tenant", cascade="all, delete-orphan")
     purchase_orders = relationship("PurchaseOrder", back_populates="tenant", cascade="all, delete-orphan")
     inventory_items = relationship("InventoryItem", back_populates="tenant", cascade="all, delete-orphan")
+    
+    # Copilot relationships
+    copilot_documents = relationship("Document", back_populates="tenant", cascade="all, delete-orphan")
+    copilot_conversations = relationship("CopilotConversation", back_populates="tenant", cascade="all, delete-orphan")
+    data_fix_suggestions = relationship("DataFixSuggestion", back_populates="tenant", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Tenant(id={self.id}, name={self.name}, code={self.code})>"
@@ -59,6 +64,10 @@ class User(Base):
     tenants = relationship("Tenant", secondary=user_tenant_association, back_populates="users")
     expenses = relationship("Expense", back_populates="user")
     observed_deals = relationship("Deal", secondary="deal_observer_association", back_populates="observers")
+    
+    # Copilot relationships
+    copilot_documents = relationship("Document", back_populates="user")
+    copilot_conversations = relationship("CopilotConversation", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, role={self.role})>"

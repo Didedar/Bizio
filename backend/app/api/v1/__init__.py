@@ -1,7 +1,7 @@
 # app/api/v1/__init__.py
 from fastapi import APIRouter
 
-from . import auth, finance, users, products, deals, clients, dashboard
+from . import auth, finance, users, products, deals, clients, dashboard, copilot
 
 api_router = APIRouter()
 
@@ -13,9 +13,11 @@ api_router.include_router(deals.router, prefix="/deals", tags=["deals"])
 api_router.include_router(finance.router, prefix="/finance", tags=["finance"])
 api_router.include_router(clients.router, prefix="/clients", tags=["clients"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
+api_router.include_router(copilot.router, prefix="/copilot", tags=["copilot"])
 
 # TODO: Create these API modules:
 # api_router.include_router(tenants.router, prefix="/tenants", tags=["tenants"])
 # api_router.include_router(inventory.router, prefix="/inventory", tags=["inventory"])
 # api_router.include_router(suppliers.router, prefix="/suppliers", tags=["suppliers"])
 # api_router.include_router(purchase_orders.router, prefix="/purchase-orders", tags=["purchase-orders"])
+
