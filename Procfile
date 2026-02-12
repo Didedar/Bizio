@@ -1,1 +1,1 @@
-web: cd frontend && npx serve -s dist -l ${PORT:-3000}
+web: cd frontend && ./node_modules/.bin/serve -s dist -l ${PORT:-3000}

@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     CREATE_TABLES_ON_STARTUP: bool = os.getenv("CREATE_TABLES_ON_STARTUP", "true").lower() in ("true", "1", "yes")
     
     # Security
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production-min-32-chars-long")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "KASDBDKAFBmjsdbhasknsad")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
     

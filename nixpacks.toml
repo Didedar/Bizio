@@ -3,10 +3,10 @@
 nixPkgs = ["nodejs-18_x"]
 
 [phases.install]
-cmds = ["cd frontend && npm install"]
+cmds = ["cd frontend && npm install && npm install serve"]
 
 [phases.build]
 cmds = ["cd frontend && npm run build"]
 
 [start]
-cmd = "cd frontend && npx serve -s dist -l ${PORT:-3000}"
+cmd = "cd frontend && ./node_modules/.bin/serve -s dist -l ${PORT:-3000}"
