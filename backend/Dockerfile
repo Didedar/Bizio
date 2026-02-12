@@ -15,8 +15,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir --only-binary :all: -r requirements.txt || \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy backend application code
+COPY backend/ .
 
 # Expose port
 EXPOSE 10000
