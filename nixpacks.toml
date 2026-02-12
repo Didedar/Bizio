@@ -1,2 +1,12 @@
-[variables]
-NIXPACKS_PYTHON_VERSION = "3.11"
+# Frontend build config for Railway
+[phases.setup]
+nixPkgs = ["nodejs-18_x"]
+
+[phases.install]
+cmds = ["cd frontend && npm install"]
+
+[phases.build]
+cmds = ["cd frontend && npm run build"]
+
+[start]
+cmd = "cd frontend && npx serve -s dist -l ${PORT:-3000}"
