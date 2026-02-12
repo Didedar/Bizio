@@ -1,1 +1,1 @@
-web: serve -s frontend/dist -l ${PORT:-3000}
+web: cd backend && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
