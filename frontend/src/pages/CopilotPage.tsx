@@ -330,7 +330,7 @@ export default function CopilotPage() {
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-    const abortStreamRef = useRef<(() => void) | null>(null);
+
 
     // Load conversations on mount
     useEffect(() => {
